@@ -14,40 +14,48 @@ import { notFound, errorHandler } from './src/middlewares/error.middleware.js';
 dotenv.config();
 const app = express();
 
-// DB
+// 📦 DATABASE
 await connectDB();
 
-// Middlewares
+// 🧩 MIDDLEWARES
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-const corsOptions = {
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
-  credentials: true,
-};
-app.use(cors(corsOptions));
+// 🌐 CORS AYARI (her yerden erişim açık)
+app.use(
+  cors({
+    origin: '*', // test aşamasında herkese izin ver
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
-// Rate limiter
+// 🚦 RATE LIMITER (istek sınırı)
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
+  windowMs: 15 * 60 * 1000, // 15 dakika
+  max: 200, // aynı IP’den en fazla 200 istek
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use('/api', limiter);
 
-// Routes
-app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+// 🧭 ROUTES
+app.get('/api/health', (req, res) =>
+  res.json({ ok: true, time: new Date().toISOString() })
+);
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 
-// Errors
+// ❌ HATA YAKALAYICILAR
 app.use(notFound);
 app.use(errorHandler);
 
+// 🚀 SERVER
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`✅ Server running on port ${PORT} - ${new Date().toLocaleString()}`)
+);
